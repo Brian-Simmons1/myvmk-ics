@@ -85,6 +85,6 @@ The script runs daily and can easily be tweaked if MyVMK changes their site layo
 
 ## ❤️ Credits
 
-Created by [bsims] — for the MyVMK community.  
+Created by [bsims] for the MyVMK community.  
 Event data © MyVMK.  
 This project is not affiliated with MyVMK or Disney.
