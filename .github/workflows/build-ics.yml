@@ -1,0 +1,57 @@
+name: Build MyVMK ICS
+
+on:
+  schedule:
+    - cron: "0 8 * * *"   # daily at 08:00 UTC (change if you like)
+  workflow_dispatch:      # allow manual runs
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      TZ: America/New_York
+      MYVMK_DEBUG: "1"   # keeps a screenshot/html if your script writes them
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          # Keep everything your script might use; harmless if unused:
+          python -m pip install requests beautifulsoup4 playwright
+          python -m playwright install --with-deps chromium
+
+      - name: Build ICS
+        run: |
+          python myvmk-cal.py \
+            --url https://download.myvmk.com/calendar.html \
+            --out myvmk.ics \
+            --tz America/New_York \
+            --verbose
+
+      - name: Prepare docs for Pages
+        run: |
+          mkdir -p docs
+          mv -f myvmk.ics docs/
+          # prevent Jekyll processing
+          touch docs/.nojekyll
+          # tiny index so the site loads
+          echo '<!doctype html><meta charset="utf-8"><h1>MyVMK Calendar</h1><p><a href="myvmk.ics">Download myvmk.ics</a></p>' > docs/index.html
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/
+          git commit -m "Update ICS [skip ci]" || echo "No changes"
+          git push
